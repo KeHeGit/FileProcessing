@@ -48,52 +48,63 @@ def merge_pdfs(pdf_files, output_filename="merged_output.pdf"):
         output_filename (str): Name of the output merged PDF file
     
     Returns:
-        str: Path to the merged PDF file, or None if merge failed
+        tuple: (str, str) Path to the merged PDF file and error message, or (None, error_msg) if merge failed
     """
     if not pdf_files:
-        return None
+        return None, "No files selected"
     
     try:
         merger = PdfMerger()
         
         for pdf_file in pdf_files:
-            merger.append(pdf_file)
+            try:
+                merger.append(pdf_file)
+            except PdfReadError as e:
+                error_msg = f"Invalid or corrupted PDF file: {os.path.basename(pdf_file)}"
+                print(f"Error: {error_msg} - {e}")
+                return None, error_msg
+            except FileNotFoundError as e:
+                error_msg = f"PDF file not found: {os.path.basename(pdf_file)}"
+                print(f"Error: {error_msg} - {e}")
+                return None, error_msg
         
         merger.write(output_filename)
         merger.close()
         
-        return os.path.abspath(output_filename)
+        return os.path.abspath(output_filename), None
     
-    except FileNotFoundError as e:
-        print(f"Error: PDF file not found - {e}")
-        return None
     except PermissionError as e:
-        print(f"Error: Permission denied - {e}")
-        return None
-    except PdfReadError as e:
-        print(f"Error: Invalid or corrupted PDF file - {e}")
-        return None
+        error_msg = "Permission denied. Cannot write to output file."
+        print(f"Error: {error_msg} - {e}")
+        return None, error_msg
     except Exception as e:
-        print(f"Error merging PDFs: {e}")
-        return None
+        error_msg = f"Unexpected error during merge: {str(e)}"
+        print(f"Error: {error_msg}")
+        return None, error_msg
 
 
-def show_completion_message(output_path):
+def show_completion_message(output_path, error_msg=None):
     """
     Shows a popup message indicating the merge process is complete.
     
     Args:
         output_path (str): Path to the merged PDF file
+        error_msg (str): Error message if merge failed
     """
     if output_path:
         messagebox.showinfo(
             "Process Completed",
             f"PDF merge completed successfully!\n\nOutput saved to:\n{output_path}"
         )
+    elif error_msg:
+        messagebox.showerror(
+            "Error",
+            f"PDF merge failed:\n\n{error_msg}"
+        )
     else:
         messagebox.showwarning(
             "Process Cancelled",
-            "No files were selected or merge failed."
+            "No files were selected."
         )
 
 
@@ -113,7 +124,7 @@ def main():
     
     if not selected_files:
         print("No files selected. Exiting.")
-        show_completion_message(None)
+        show_completion_message(None, None)
         root.destroy()
         return
     
@@ -121,15 +132,15 @@ def main():
     print("Merging PDFs...")
     
     # Step 3: Merge the selected files
-    output_path = merge_pdfs(selected_files)
+    output_path, error_msg = merge_pdfs(selected_files)
     
     # Step 4: Show completion popup
-    show_completion_message(output_path)
+    show_completion_message(output_path, error_msg)
     
     if output_path:
         print(f"\nSuccess! Merged PDF saved to: {output_path}")
     else:
-        print("\nMerge process failed or was cancelled.")
+        print(f"\nMerge process failed: {error_msg}")
     
     root.destroy()
 
