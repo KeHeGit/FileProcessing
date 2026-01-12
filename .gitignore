@@ -34,7 +34,6 @@ ENV/
 
 # Output files
 merged_output.pdf
-*.pdf
 
 # OS
 .DS_Store

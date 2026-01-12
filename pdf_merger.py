@@ -10,16 +10,16 @@ from PyPDF2 import PdfMerger
 import os
 
 
-def select_pdf_files():
+def select_pdf_files(root):
     """
     Opens file dialogs repeatedly to select PDF files until user clicks Cancel.
+    
+    Args:
+        root: The Tk root window instance
     
     Returns:
         list: List of selected PDF file paths
     """
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    
     selected_files = []
     
     while True:
@@ -63,6 +63,12 @@ def merge_pdfs(pdf_files, output_filename="merged_output.pdf"):
         
         return os.path.abspath(output_filename)
     
+    except FileNotFoundError as e:
+        print(f"Error: PDF file not found - {e}")
+        return None
+    except PermissionError as e:
+        print(f"Error: Permission denied - {e}")
+        return None
     except Exception as e:
         print(f"Error merging PDFs: {e}")
         return None
@@ -75,9 +81,6 @@ def show_completion_message(output_path):
     Args:
         output_path (str): Path to the merged PDF file
     """
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    
     if output_path:
         messagebox.showinfo(
             "Process Completed",
@@ -97,12 +100,17 @@ def main():
     print("PDF Merger - Select PDF files to merge")
     print("=" * 50)
     
+    # Create a single Tk root window for the entire application
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    
     # Step 1-3: Select PDF files
-    selected_files = select_pdf_files()
+    selected_files = select_pdf_files(root)
     
     if not selected_files:
         print("No files selected. Exiting.")
         show_completion_message(None)
+        root.destroy()
         return
     
     print(f"\nTotal files selected: {len(selected_files)}")
@@ -118,6 +126,8 @@ def main():
         print(f"\nSuccess! Merged PDF saved to: {output_path}")
     else:
         print("\nMerge process failed or was cancelled.")
+    
+    root.destroy()
 
 
 if __name__ == "__main__":
