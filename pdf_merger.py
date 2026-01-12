@@ -54,22 +54,20 @@ def merge_pdfs(pdf_files, output_filename="merged_output.pdf"):
         return None, "No files selected"
     
     try:
-        merger = PdfMerger()
-        
-        for pdf_file in pdf_files:
-            try:
-                merger.append(pdf_file)
-            except PdfReadError as e:
-                error_msg = f"Invalid or corrupted PDF file: {os.path.basename(pdf_file)}"
-                print(f"Error: {error_msg} - {e}")
-                return None, error_msg
-            except FileNotFoundError as e:
-                error_msg = f"PDF file not found: {os.path.basename(pdf_file)}"
-                print(f"Error: {error_msg} - {e}")
-                return None, error_msg
-        
-        merger.write(output_filename)
-        merger.close()
+        with PdfMerger() as merger:
+            for pdf_file in pdf_files:
+                try:
+                    merger.append(pdf_file)
+                except PdfReadError as e:
+                    error_msg = f"Invalid or corrupted PDF file: {os.path.basename(pdf_file)}"
+                    print(f"Error: {error_msg} - {e}")
+                    return None, error_msg
+                except FileNotFoundError as e:
+                    error_msg = f"PDF file not found: {os.path.basename(pdf_file)}"
+                    print(f"Error: {error_msg} - {e}")
+                    return None, error_msg
+            
+            merger.write(output_filename)
         
         return os.path.abspath(output_filename), None
     
