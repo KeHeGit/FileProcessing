@@ -7,6 +7,7 @@ Allows users to select multiple PDF files and merge them into a single PDF.
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PyPDF2 import PdfMerger
+from PyPDF2.errors import PdfReadError
 import os
 
 
@@ -68,6 +69,9 @@ def merge_pdfs(pdf_files, output_filename="merged_output.pdf"):
         return None
     except PermissionError as e:
         print(f"Error: Permission denied - {e}")
+        return None
+    except PdfReadError as e:
+        print(f"Error: Invalid or corrupted PDF file - {e}")
         return None
     except Exception as e:
         print(f"Error merging PDFs: {e}")
